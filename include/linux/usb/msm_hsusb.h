@@ -346,11 +346,13 @@ struct msm_otg {
 	atomic_t pm_suspended;
 	struct notifier_block pm_notify;
 	atomic_t in_lpm;
+	atomic_t suspend_work_pending;
 	int async_int;
 	unsigned cur_power;
 	struct delayed_work chg_work;
 	struct delayed_work pmic_id_status_work;
 	struct delayed_work check_ta_work;
+	struct delayed_work suspend_work;
 	enum usb_chg_state chg_state;
 	enum usb_chg_type chg_type;
 	unsigned dcd_time;

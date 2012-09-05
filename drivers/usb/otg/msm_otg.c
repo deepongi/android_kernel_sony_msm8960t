@@ -82,6 +82,8 @@
 #define USB_PHY_VDD_DIG_VOL_MIN	1045000 /* uV */
 #define USB_PHY_VDD_DIG_VOL_MAX	1320000 /* uV */
 
+#define USB_SUSPEND_DELAY_TIME	(500 * HZ/1000) /* 500 msec */
+
 #define WAITMS_VBUS_DOWN_BC11	40
 
 #ifdef CONFIG_FB_MSM_MHL_SII8334
@@ -769,7 +771,8 @@ static int msm_otg_set_suspend(struct usb_phy *phy, int suspend)
 	if (aca_enabled())
 		return 0;
 
-	if (atomic_read(&motg->in_lpm) == suspend)
+	if (atomic_read(&motg->in_lpm) == suspend &&
+		!atomic_read(&motg->suspend_work_pending))
 		return 0;
 
 	if (suspend) {
@@ -790,7 +793,9 @@ static int msm_otg_set_suspend(struct usb_phy *phy, int suspend)
 				break;
 			set_bit(A_BUS_SUSPEND, &motg->inputs);
 			if (!atomic_read(&motg->in_lpm))
-				queue_work(system_nrt_wq, &motg->sm_work);
+				queue_delayed_work(system_nrt_wq,
+					&motg->suspend_work,
+					USB_SUSPEND_DELAY_TIME);
 			break;
 
 		default:
@@ -2645,6 +2650,7 @@ static void msm_otg_sm_work(struct work_struct *w)
 			clear_bit(A_BUS_REQ, &motg->inputs);
 			cancel_delayed_work_sync(&motg->chg_work);
 			cancel_delayed_work_sync(&motg->check_ta_work);
+			cancel_delayed_work_sync(&motg->suspend_work);
 			motg->chg_state = USB_CHG_STATE_UNDEFINED;
 			motg->chg_type = USB_INVALID_CHARGER;
 			msm_otg_notify_charger(motg, 0);
@@ -3160,6 +3166,14 @@ static void msm_otg_sm_work(struct work_struct *w)
 	}
 	if (work)
 		queue_work(system_nrt_wq, &motg->sm_work);
+}
+
+static void msm_otg_suspend_work(struct work_struct *w)
+{
+	struct msm_otg *motg =
+		container_of(w, struct msm_otg, suspend_work.work);
+	atomic_set(&motg->suspend_work_pending, 0);
+	msm_otg_sm_work(&motg->sm_work);
 }
 
 static irqreturn_t msm_otg_irq(int irq, void *data)
@@ -4081,6 +4095,7 @@ static int __init msm_otg_probe(struct platform_device *pdev)
 	INIT_DELAYED_WORK(&motg->chg_work, msm_chg_detect_work);
 	INIT_DELAYED_WORK(&motg->pmic_id_status_work, msm_pmic_id_status_w);
 	INIT_DELAYED_WORK(&motg->check_ta_work, msm_ta_detect_work);
+	INIT_DELAYED_WORK(&motg->suspend_work, msm_otg_suspend_work);
 	setup_timer(&motg->id_timer, msm_otg_id_timer_func,
 				(unsigned long) motg);
 	setup_timer(&motg->chg_check_timer, msm_otg_chg_check_timer_func,
@@ -4272,6 +4287,7 @@ static int __devexit msm_otg_remove(struct platform_device *pdev)
 	cancel_delayed_work_sync(&motg->chg_work);
 	cancel_delayed_work_sync(&motg->pmic_id_status_work);
 	cancel_delayed_work_sync(&motg->check_ta_work);
+	cancel_delayed_work_sync(&motg->suspend_work);
 	cancel_work_sync(&motg->sm_work);
 
 	pm_runtime_resume(&pdev->dev);
