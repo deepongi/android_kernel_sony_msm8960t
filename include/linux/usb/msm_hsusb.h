@@ -305,6 +305,8 @@ struct msm_otg_platform_data {
  * @mhl_enabled: MHL driver registration successful and MHL enabled.
  * @pm_done: Indicates whether USB is PM resumed
  * @host_bus_suspend: indicates host bus suspend or not.
+ * @chg_check_timer: The timer used to implement the workaround to detect
+ *               very slow plug in of wall charger.
  */
 struct msm_otg {
 	struct usb_phy phy;
@@ -335,7 +337,8 @@ struct msm_otg {
 #define A_CONN		15
 #define B_BUS_REQ	16
 #define MHL	        17
-#define VBUS_DROP_DET	18
+#define B_FALSE_SDP	18
+#define VBUS_DROP_DET	19
 	unsigned long inputs;
 	struct work_struct sm_work;
 	bool sm_work_pending;
@@ -359,6 +362,7 @@ struct msm_otg {
 	uint32_t bus_perf_client;
 	bool mhl_enabled;
 	bool host_bus_suspend;
+	struct timer_list chg_check_timer;
 	/*
 	 * Allowing PHY power collpase turns off the HSUSB 3.3v and 1.8v
 	 * analog regulators while going to low power mode.
