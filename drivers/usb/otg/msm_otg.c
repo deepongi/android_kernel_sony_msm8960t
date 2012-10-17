@@ -1047,6 +1047,7 @@ static int msm_otg_resume(struct msm_otg *motg)
 	if (!atomic_read(&motg->in_lpm))
 		return 0;
 
+	disable_irq(motg->irq);
 	wake_lock(&motg->wlock);
 
 	/* Vote for TCXO when waking up the phy */
@@ -1146,6 +1147,7 @@ skip_phy_resume:
 		enable_irq(motg->async_int);
 		motg->async_int = 0;
 	}
+	enable_irq(motg->irq);
 
 	/* If ASYNC IRQ is present then keep it enabled only during LPM */
 	if (motg->async_irq)
