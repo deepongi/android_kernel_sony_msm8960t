@@ -86,6 +86,11 @@
 #define ID_POLL_COUNT_ID_FLOAT	2
 #endif
 
+unsigned int lpm_disconnect_thresh = 1000;
+module_param(lpm_disconnect_thresh , uint, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(lpm_disconnect_thresh,
+	"Delay before entering LPM on USB disconnect");
+
 static DECLARE_COMPLETION(pmic_vbus_init);
 static struct msm_otg *the_msm_otg;
 static bool debug_aca_enabled;
@@ -2528,7 +2533,12 @@ static void msm_otg_sm_work(struct work_struct *w)
 				break;
 			}
 			pm_runtime_put_noidle(otg->phy->dev);
-			pm_runtime_suspend(otg->phy->dev);
+			/*
+			 * Only if autosuspend was enabled in probe, it will be
+			 * used here. Otherwise, no delay will be used.
+			 */
+			pm_runtime_mark_last_busy(otg->phy->dev);
+			pm_runtime_autosuspend(otg->phy->dev);
 		}
 		break;
 	case OTG_STATE_B_SRP_INIT:
@@ -3974,6 +3984,12 @@ static int __init msm_otg_probe(struct platform_device *pdev)
 	wake_lock(&motg->wlock);
 	pm_runtime_set_active(&pdev->dev);
 	pm_runtime_enable(&pdev->dev);
+
+	if (motg->pdata->delay_lpm_on_disconnect) {
+		pm_runtime_set_autosuspend_delay(&pdev->dev,
+			lpm_disconnect_thresh);
+		pm_runtime_use_autosuspend(&pdev->dev);
+	}
 
 	if (motg->pdata->bus_scale_table) {
 		motg->bus_perf_client =

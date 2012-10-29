@@ -197,6 +197,8 @@ enum usb_vdd_value {
  *              is connected.
  * @core_clk_always_on_workaround: Don't disable core_clk when
  *              USB enters LPM.
+ * @delay_lpm_on_disconnect: Use a delay before entering LPM
+ *              upon USB cable disconnection.
  * @bus_scale_table: parameters for bus bandwidth requirements
  * @mhl_dev_name: MHL device name used to register with MHL driver.
  */
@@ -215,6 +217,7 @@ struct msm_otg_platform_data {
 	bool disable_reset_on_disconnect;
 	bool enable_lpm_on_dev_suspend;
 	bool core_clk_always_on_workaround;
+	bool delay_lpm_on_disconnect;
 	struct msm_bus_scale_pdata *bus_scale_table;
 	const char *mhl_dev_name;
 };
