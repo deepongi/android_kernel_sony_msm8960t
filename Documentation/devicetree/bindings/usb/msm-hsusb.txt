@@ -35,6 +35,10 @@ Optional properties :
   0 will be treated as 500mA
 - qcom,hsusb-otg-pclk-src-name: The source of pclk
 - qcom,hsusb-otg-pmic-id-irq: ID, routed to PMIC IRQ number
+- qcom,hsusb-otg-dpsehv-int: If present, indicates mpm interrupt to be configured
+	for detection of dp line transition during VDD minimization.
+- qcom,hsusb-otg-dmsehv-int: If present, indicates mpm interrupt to be configured
+	for detection of dm line transition during VDD minimization.
 
 Example HSUSB OTG controller device node :
 	usb@f9690000 {
@@ -51,6 +55,8 @@ Example HSUSB OTG controller device node :
 		qcom,hsusb-otg-power-budget = <500>;
 		qcom,hsusb-otg-pclk-src-name = "dfab_usb_clk";
 		qcom,hsusb-otg-pmic-id-irq = <47>
+		qcom,hsusb-otg-dpsehv-int = <49>;
+		qcom,hsusb-otg-dmsehv-int = <58>;
 	};
 
 BAM:
