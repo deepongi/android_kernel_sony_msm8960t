@@ -307,6 +307,7 @@ struct msm_otg_platform_data {
  * @host_bus_suspend: indicates host bus suspend or not.
  * @chg_check_timer: The timer used to implement the workaround to detect
  *               very slow plug in of wall charger.
+ * @ui_enabled: USB Intterupt is enabled or disabled.
  */
 struct msm_otg {
 	struct usb_phy phy;
@@ -403,6 +404,7 @@ struct msm_otg {
 	u8 active_tmout;
 	struct hrtimer timer;
 	enum usb_vdd_type vdd_type;
+	int ui_enabled;
 	bool pm_done;
 };
 
