@@ -163,6 +163,10 @@
 #include "board-rdtags.h"
 #endif
 
+#ifdef CONFIG_KEXEC_HARDBOOT
+#include <linux/memblock.h>
+#endif
+
 static struct platform_device msm_fm_platform_init = {
 	.name = "iris_fm",
 	.id   = -1,
@@ -1461,6 +1465,20 @@ static void __init msm8960_early_memory(void)
 	place_movable_zone();
 }
 
+#ifdef CONFIG_KEXEC_HARDBOOT
+void __init huashan_init_kexec(void)
+{
+	// Reserve space for hardboot page, just before the ram_console
+	struct membank* bank = &meminfo.bank[0];
+	phys_addr_t start = bank->start + bank->size - SZ_1M - SZ_1M;
+	int ret = memblock_remove(start, SZ_1M);
+	if(!ret)
+		pr_info("Hardboot page reserved at 0x%X\n", start);
+	else
+		pr_err("Failed to reserve space for hardboot page at 0x%X!\n", start);
+}
+#endif
+
 static char prim_panel_name[PANEL_NAME_MAX_LEN];
 static char ext_panel_name[PANEL_NAME_MAX_LEN];
 static int __init prim_display_setup(char *param)
@@ -1487,6 +1505,9 @@ static void __init msm8960_reserve(void)
 #endif
 	msm8960_set_display_params(prim_panel_name, ext_panel_name);
 	msm_reserve();
+#ifdef CONFIG_KEXEC_HARDBOOT
+	huashan_init_kexec();
+#endif
 }
 
 static void __init msm8960_allocate_memory_regions(void)
