@@ -2,7 +2,7 @@
  *
  * Copyright (C) 2008 Google, Inc.
  * Author: Brian Swetland <swetland@google.com>
- * Copyright (c) 2009-2012, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2009-2014, The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -293,6 +293,7 @@ struct msm_otg_platform_data {
  * @xo_handle: TCXO buffer handle
  * @bus_perf_client: Bus performance client handle to request BUS bandwidth
  * @mhl_enabled: MHL driver registration successful and MHL enabled.
+ * @pm_done: Indicates whether USB is PM resumed
  */
 struct msm_otg {
 	struct usb_phy phy;
@@ -373,6 +374,7 @@ struct msm_otg {
 	u8 active_tmout;
 	struct hrtimer timer;
 	enum usb_vdd_type vdd_type;
+	bool pm_done;
 };
 
 struct msm_hsic_host_platform_data {
